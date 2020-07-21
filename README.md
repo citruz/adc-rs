@@ -1,4 +1,4 @@
-adc-rc
+adc-rs
 ======
 A native rust implementation of the Apple Data Compression scheme used for example in DMG images.
 Supports decompression only.
