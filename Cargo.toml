@@ -5,7 +5,7 @@ authors = ["Felix Seele <fseele@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/citruz/adc-rs"
 readme = "README.md"
-keywords = ["apple data compression"]
+keywords = ["apple", "data", "compression"]
 categories = ["compression"]
 description = """
 Rust implementation of the Apple Data Compression scheme used in DMG images.
