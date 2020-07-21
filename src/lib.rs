@@ -1,12 +1,12 @@
 //! Implementation of the Apple Data Compression scheme in Rust
-//! 
+//!
 //! ADC is a rather basic run length compression scheme. This library implements decompression only.
-//! 
+//!
 //! # Example
-//! 
+//!
 //! ```
 //! use adc::AdcDecoder;
-//! 
+//!
 //! let input: &[u8] = &[0x83, 0xfe, 0xed, 0xfa, 0xce, 0x00, 0x00, 0x40, 0x00, 0x06];
 //! let mut d = AdcDecoder::new(input);
 //! let mut data = vec![0; 11];
