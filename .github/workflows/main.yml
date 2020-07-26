@@ -34,7 +34,7 @@ jobs:
             os: windows-latest
             rust: stable-x86_64-gnu
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@main
       with:
         submodules: true
     - name: Install Rust (rustup)
@@ -49,7 +49,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@main
     - name: Install Rust
       run: rustup update stable && rustup default stable && rustup component add rustfmt
     - run: cargo fmt -- --check
