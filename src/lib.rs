@@ -17,9 +17,8 @@
 //! println!("{:?} bytes decompressed", bytes_out);
 //! ````
 
+use byteorder::{ReadBytesExt, BE};
 use std::io::prelude::*;
-
-use bincode::Options;
 
 #[derive(PartialEq, Debug)]
 enum AdcChunkType {
@@ -68,7 +67,7 @@ impl<R: Read> AdcDecoder<R> {
     }
 
     fn get_next_chunk(&mut self) -> Result<Option<AdcChunk>, AdcError> {
-        let byte: u8 = match bincode::deserialize_from(&mut self.input) {
+        let byte = match self.input.read_u8() {
             Err(_) => return Ok(None), // reached eof
             Ok(val) => val,
         };
@@ -87,7 +86,7 @@ impl<R: Read> AdcDecoder<R> {
                 offset: 0,
             },
             AdcChunkType::TwoByte => {
-                let byte2: u8 = match bincode::deserialize_from(&mut self.input) {
+                let byte2 = match self.input.read_u8() {
                     Err(err) => return Err(AdcError::Io(format!("{}", err))),
                     Ok(val) => val,
                 };
@@ -98,11 +97,7 @@ impl<R: Read> AdcDecoder<R> {
                 }
             }
             AdcChunkType::ThreeByte => {
-                let offset: u16 = match bincode::DefaultOptions::new()
-                    .with_big_endian()
-                    .with_fixint_encoding()
-                    .deserialize_from(&mut self.input)
-                {
+                let offset = match self.input.read_u16::<BE>() {
                     Err(err) => return Err(AdcError::Io(format!("{}", err))),
                     Ok(val) => val,
                 };
@@ -202,9 +197,7 @@ mod tests {
         let bytes_out = d.decompress_into(&mut data[..]);
         assert_eq!(
             bytes_out,
-            Err(AdcError::Io(
-                "io error: failed to fill whole buffer".to_string()
-            ))
+            Err(AdcError::Io("failed to fill whole buffer".to_string()))
         );
     }
 
