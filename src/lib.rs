@@ -17,8 +17,6 @@
 //! println!("{:?} bytes decompressed", bytes_out);
 //! ````
 
-extern crate bincode;
-
 use std::io::prelude::*;
 
 use bincode::Options;
@@ -54,7 +52,7 @@ pub enum AdcError {
 }
 
 impl std::fmt::Display for AdcError {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             AdcError::Io(ref err) => write!(fmt, "{}", err),
             AdcError::BufferTooSmall => write!(fmt, "output buffer too small"),
@@ -82,37 +80,41 @@ impl<R: Read> AdcDecoder<R> {
             AdcChunkType::TwoByte
         };
 
-        if chunk_type == AdcChunkType::Plain {
-            return Ok(Some(AdcChunk {
+        let chunk = match chunk_type {
+            AdcChunkType::Plain => AdcChunk {
                 r#type: chunk_type,
                 size: ((byte & 0x7f) + 1) as usize,
                 offset: 0,
-            }));
-        } else if chunk_type == AdcChunkType::TwoByte {
-            let byte2: u8 = match bincode::deserialize_from(&mut self.input) {
-                Err(err) => return Err(AdcError::Io(format!("{}", err))),
-                Ok(val) => val,
-            };
-            return Ok(Some(AdcChunk {
-                r#type: chunk_type,
-                size: (((byte & 0x3f) >> 2) + 3) as usize,
-                offset: (((byte as usize) & 0x3) << 8) + byte2 as usize,
-            }));
-        } else {
-            let offset: u16 = match bincode::DefaultOptions::new()
-                .with_big_endian()
-                .with_fixint_encoding()
-                .deserialize_from(&mut self.input)
-            {
-                Err(err) => return Err(AdcError::Io(format!("{}", err))),
-                Ok(val) => val,
-            };
-            return Ok(Some(AdcChunk {
-                r#type: chunk_type,
-                size: ((byte & 0x3f) + 4) as usize,
-                offset: offset as usize,
-            }));
-        }
+            },
+            AdcChunkType::TwoByte => {
+                let byte2: u8 = match bincode::deserialize_from(&mut self.input) {
+                    Err(err) => return Err(AdcError::Io(format!("{}", err))),
+                    Ok(val) => val,
+                };
+                AdcChunk {
+                    r#type: chunk_type,
+                    size: (((byte & 0x3f) >> 2) + 3) as usize,
+                    offset: (((byte as usize) & 0x3) << 8) + byte2 as usize,
+                }
+            }
+            AdcChunkType::ThreeByte => {
+                let offset: u16 = match bincode::DefaultOptions::new()
+                    .with_big_endian()
+                    .with_fixint_encoding()
+                    .deserialize_from(&mut self.input)
+                {
+                    Err(err) => return Err(AdcError::Io(format!("{}", err))),
+                    Ok(val) => val,
+                };
+                AdcChunk {
+                    r#type: chunk_type,
+                    size: ((byte & 0x3f) + 4) as usize,
+                    offset: offset as usize,
+                }
+            }
+        };
+
+        Ok(Some(chunk))
     }
 
     /// Decompress input into byte array
@@ -156,8 +158,7 @@ impl<R: Read> AdcDecoder<R> {
 
 #[cfg(test)]
 mod tests {
-    use AdcDecoder;
-    use AdcError;
+    use super::*;
 
     #[test]
     fn all_types() {
