@@ -10,7 +10,7 @@ Supports decompression only.
 ```toml
 # Cargo.toml
 [dependencies]
-adc = "0.1.0"
+adc = "0.2.0"
 ```
 
 ## Example
