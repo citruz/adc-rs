@@ -17,13 +17,23 @@ adc = "0.1.0"
 
 ```rust
 use adc::AdcDecoder;
+use std::io::Read;
 
 let input: &[u8] = &[0x83, 0xfe, 0xed, 0xfa, 0xce, 0x00, 0x00, 0x40, 0x00, 0x06];
 let mut d = AdcDecoder::new(input);
 let mut data = vec![0; 11];
-let bytes_out = match d.decompress_into(&mut data[..]) {
+let bytes_out = match d.read_exact(&mut data) {
     Ok(val) => val,
     Err(err) => panic!("error: {:?}", err),
 };
 println!("{:?} bytes decompressed", bytes_out);
 ```
+
+Changelog
+---------
+
+0.2.0
+- Switched to an API based on the `Read` trait (breaking change)
+
+0.1.0
+- Initial release
