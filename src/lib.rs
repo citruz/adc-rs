@@ -48,7 +48,7 @@ struct Window(VecDeque<u8>);
 
 impl Window {
     // The windows needs to fit `max offset` bytes.
-    const SIZE: usize = u16::MAX as usize;
+    const SIZE: usize = u16::MAX as usize + 1;
 
     fn new() -> Self {
         Self(VecDeque::with_capacity(Self::SIZE))
