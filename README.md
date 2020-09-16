@@ -10,7 +10,7 @@ Supports decompression only.
 ```toml
 # Cargo.toml
 [dependencies]
-adc = "0.2.0"
+adc = "0.2"
 ```
 
 ## Example
@@ -31,6 +31,9 @@ println!("{:?} bytes decompressed", bytes_out);
 
 Changelog
 ---------
+
+0.2.1
+- Fixed two decoding bugs
 
 0.2.0
 - Switched to an API based on the `Read` trait (breaking change)
