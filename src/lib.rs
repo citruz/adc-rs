@@ -48,7 +48,7 @@ struct Window(VecDeque<u8>);
 
 impl Window {
     // The windows needs to fit `max offset` bytes.
-    const SIZE: usize = u16::MAX as usize;
+    const SIZE: usize = u16::MAX as usize + 1;
 
     fn new() -> Self {
         Self(VecDeque::with_capacity(Self::SIZE))
@@ -87,14 +87,19 @@ impl<R: Read> AdcDecoder<R> {
         }
     }
 
-    /// Update `self.current_chunk` with the next chunk.
-    fn next_chunk(&mut self) -> io::Result<()> {
+    fn next_nonempty_chunk(&mut self) -> io::Result<Option<AdcChunk>> {
+        while let Some(chunk) = self.next_chunk()? {
+            if chunk.size > 0 {
+                return Ok(Some(chunk));
+            }
+        }
+        Ok(None)
+    }
+
+    fn next_chunk(&mut self) -> io::Result<Option<AdcChunk>> {
         let byte = match self.input.read_u8() {
             Ok(val) => val,
-            Err(_) => {
-                self.current_chunk = None;
-                return Ok(());
-            }
+            Err(_) => return Ok(None),
         };
 
         let chunk_type = if (byte & 0x80) != 0 {
@@ -129,8 +134,7 @@ impl<R: Read> AdcDecoder<R> {
             }
         };
 
-        self.current_chunk = Some(chunk);
-        Ok(())
+        Ok(Some(chunk))
     }
 
     fn read_from_chunk(&mut self, buf: &mut [u8]) -> io::Result<usize> {
@@ -175,7 +179,7 @@ impl<R: Read> AdcDecoder<R> {
 impl<R: Read> Read for AdcDecoder<R> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         if self.current_chunk.is_none() {
-            self.next_chunk()?;
+            self.current_chunk = self.next_nonempty_chunk()?;
         }
 
         self.read_from_chunk(buf)
